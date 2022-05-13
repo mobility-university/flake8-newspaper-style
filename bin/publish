@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+./setup.py sdist
+twine upload dist/*

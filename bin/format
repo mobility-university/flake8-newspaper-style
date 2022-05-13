@@ -1,0 +1,29 @@
+#!/bin/bash
+set -e
+
+options=""
+if [ -t 0 ]; then
+  options="${options} --tty"
+fi
+
+# just check?
+black_options=''
+if [ ! -z ${check+x} ]; then
+  black_options="--check"
+fi
+
+mkdir -p build/black && cat > build/black/Dockerfile << EOF
+FROM python:3.10-slim
+
+RUN pip install black==22.3.0
+
+ENTRYPOINT ["black"]
+EOF
+docker build --file build/black/Dockerfile --tag black --quiet build/black &>/dev/null
+
+docker run --rm --user $UID -v $(pwd):/data -w /data black . \
+   ${black_options} \
+   --skip-string-normalization \
+   --target-version py310
+
+ls -1 features/*.feature | xargs -I {} docker run --rm -v $(pwd):/work gherkin/format --replace /work/{} --verbose
