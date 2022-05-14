@@ -77,6 +77,7 @@ class Plugin:
         ...     def headline(self):
         ...         A.text()
         ... ''')
+        6:8 NEWS100 newspaper style: function text defined in line 2 should be moved down
         >>> lint('''def text():
         ...     ...
         ... def headline():
@@ -149,6 +150,7 @@ class Plugin:
         ... def b():
         ...     A.a()
         ... ''')
+        6:4 NEWS100 newspaper style: function a defined in line 3 should be moved down
         """
         visitor = Visitor()
         visitor.visit(self.tree)
@@ -161,7 +163,6 @@ class Visitor(ast.NodeVisitor):
         self.functions = []
         self.scope = []
         self.errors = []
-        self.within_call = False
 
     def visit_FunctionDef(self, node):
         self.scope.append(node.name)
@@ -175,62 +176,74 @@ class Visitor(ast.NodeVisitor):
         self.scope.pop()
 
     def visit_Call(self, node):
-        self.within_call = True
-        self.generic_visit(node)
-        self.within_call = False
+        name = None
+        if isinstance(node.func, ast.Name):
+            name = node.func.id
+        elif isinstance(node.func, ast.Attribute) and isinstance(
+            node.func.value, ast.Name
+        ):
+            if node.func.value.id in self.determine_class_scopes():
+                self.check_function_call(
+                    name=node.func.attr,
+                    line=node.lineno,
+                    col=node.col_offset,
+                    class_name=node.func.value.id,
+                )
+                return
+            if node.func.value.id not in ('self', 'super'):
+                return
+            name = node.func.attr
+        self.check_function_call(name=name, line=node.lineno, col=node.col_offset)
 
-    def visit_If(self, node):
-        if self.is_if_main(node.test):
-            # it is convention to define if __func__=='__main__':
-            # at the end of the file and violate newspaper style
-            return
-        self.generic_visit(node)
+    def determine_class_scopes(self):
+        scopes = set()
+        for scope in self.scope:
+            if not scope.startswith('class '):
+                continue
+            scopes.add(scope[len('class '):])
+        for scope, _, _ in self.functions:
+            if not scope:
+                continue
+            if not scope[0].startswith('class '):
+                continue
+            scopes.add(scope[0][len('class '):])
+        return scopes
 
-    @staticmethod
-    def is_if_main(test):
-        if not isinstance(test, ast.Compare):
-            return False
-        if not isinstance(test.left, ast.Name) or test.left.id != '__name__':
-            return False
-        if len(test.ops) != 1:
-            return False
-        if not isinstance(test.ops[0], ast.Eq):
-            return False
-        if len(test.comparators) != 1:
-            return False
-        return (
-            isinstance(test.comparators[0], ast.Constant)
-            and test.comparators[0].value == '__main__'
+    def check_function_call(self, name, line, col, class_name=None):
+        if not self.scope:
+            return None
+        matching_function = (
+            self.get_matching_function(name)
+            if not class_name
+            else self.get_matching_class_function(class_name, name)
         )
-
-    def visit_Attribute(self, node):
-        if not self.within_call:
-            return
-        if node.attr:
-            self.check_function_call(
-                name=node.attr, line=node.lineno, col=node.col_offset
-            )
-            return
-        self.generic_visit(node)
-
-    def visit_Name(self, node):
-        if not self.within_call:
-            return
-        self.check_function_call(name=node.id, line=node.lineno, col=node.col_offset)
-
-    def check_function_call(self, name, line, col):
-        matching_function = self.get_matching_function(name)
         if not matching_function:
-            return
+            return None
         _scope, _name, matching_line = matching_function
         if matching_line < line:
             self.errors.append(
                 (line, col, NEWS100.format(name=name, line=matching_line))
             )
+        return None
+
+    def get_matching_class_function(self, class_name, name):
+        for scope, fname, line in self.functions:
+            if not scope:
+                continue
+            if self.scope and scope[0] == self.scope[0]:
+                for lhs, rhs in zip(scope, scope[1:]):
+                    if lhs != f'class {class_name}':
+                        continue
+                    if rhs == name:
+                        return (scope, rhs, line)
+                continue
+
+            if scope[0] == f'class {class_name}':
+                if fname == name:
+                    return (scope, fname, line)
+        return None
 
     def get_matching_function(self, name):
-        if not self.scope:
-            return None
         for scope, fname, line in self.functions:
             if scope and self.scope and scope[0] == self.scope[0]:
                 for lhs, rhs in zip(scope, scope[1:]):
