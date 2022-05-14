@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 import setuptools
 
+with open('README.md', 'r', encoding='utf-8') as file:
+    README = file.read()
+
 setuptools.setup(
     name="flake8-newspaper-style",
     license="MIT",
-    version="0.2.7",
+    version="0.2.8",
     description="Check code for newspaper style",
+    long_description=README,
+    long_description_content_type='text/markdown',
     author="think",
     author_email="who@knows.me",
     classifiers=[

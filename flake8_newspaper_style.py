@@ -1,5 +1,6 @@
 import ast
 import importlib.metadata
+import sys
 
 NEWS100 = "NEWS100 newspaper style: function {name} defined in line {line} should be moved down"
 
@@ -165,13 +166,13 @@ class Visitor(ast.NodeVisitor):
         self.errors = []
 
     def visit_FunctionDef(self, node):
-        self.scope.append(node.name)
-        self.functions.append((list(self.scope), node.name, node.lineno))
+        self.scope.append(node)
+        self.functions.append((list(self.scope), node))  # node instead of node.name/lineno
         self.generic_visit(node)
         self.scope.pop()
 
     def visit_ClassDef(self, node):
-        self.scope.append(f'class {node.name}')
+        self.scope.append(node)
         self.generic_visit(node)
         self.scope.pop()
 
@@ -198,15 +199,15 @@ class Visitor(ast.NodeVisitor):
     def determine_class_scopes(self):
         scopes = set()
         for scope in self.scope:
-            if not scope.startswith('class '):
+            if not isinstance(scope, ast.ClassDef):
                 continue
-            scopes.add(scope[len('class '):])
-        for scope, _, _ in self.functions:
+            scopes.add(scope.name)
+        for scope, _ in self.functions:
             if not scope:
                 continue
-            if not scope[0].startswith('class '):
+            if not isinstance(scope[0], ast.ClassDef):
                 continue
-            scopes.add(scope[0][len('class '):])
+            scopes.add(scope[0].name)
         return scopes
 
     def check_function_call(self, name, line, col, class_name=None):
@@ -219,41 +220,38 @@ class Visitor(ast.NodeVisitor):
         )
         if not matching_function:
             return None
-        _scope, _name, matching_line = matching_function
-        if matching_line < line:
+        _scope, node = matching_function
+        if node.lineno < line:
             self.errors.append(
-                (line, col, NEWS100.format(name=name, line=matching_line))
+                (line, col, NEWS100.format(name=name, line=node.lineno))
             )
         return None
 
     def get_matching_class_function(self, class_name, name):
-        for scope, fname, line in self.functions:
+        for scope, node in self.functions:
             if not scope:
                 continue
             if self.scope and scope[0] == self.scope[0]:
                 for lhs, rhs in zip(scope, scope[1:]):
-                    if lhs != f'class {class_name}':
-                        continue
-                    if rhs == name:
-                        return (scope, rhs, line)
+                    if isinstance(lhs, ast.ClassDef) and lhs.name == class_name and rhs.name == node.name:
+                        return (scope, node)
                 continue
 
-            if scope[0] == f'class {class_name}':
-                if fname == name:
-                    return (scope, fname, line)
+            if isinstance(scope[0], ast.ClassDef) and scope[0].name == class_name and name == node.name:
+                return (scope, node)
         return None
 
     def get_matching_function(self, name):
-        for scope, fname, line in self.functions:
+        for scope, node in self.functions:
             if scope and self.scope and scope[0] == self.scope[0]:
                 for lhs, rhs in zip(scope, scope[1:]):
-                    if not lhs.startswith('class '):
+                    if not isinstance(lhs, ast.ClassDef):
                         continue
-                    if rhs == name:
-                        return (scope, rhs, line)
+                    if rhs.name == name:
+                        return (scope, node)
                 continue
             if len(scope) > 1:
                 continue
-            if name != fname:
+            if name != node.name:
                 continue
-            return (scope, fname, line)
+            return (scope, node)
