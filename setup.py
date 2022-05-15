@@ -7,7 +7,7 @@ with open('README.md', 'r', encoding='utf-8') as file:
 setuptools.setup(
     name="flake8-newspaper-style",
     license="MIT",
-    version="0.2.9",
+    version="0.2.10",
     description="Check code for newspaper style",
     long_description=README,
     long_description_content_type='text/markdown',
