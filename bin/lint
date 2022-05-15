@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+pylint --disable=C0103,C0114,C0115,C0116,R0903 *.py features/steps/*.py
+flake8 --max-line-length=120 .
