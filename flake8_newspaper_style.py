@@ -249,31 +249,28 @@ class Visitor(ast.NodeVisitor):
         self.scope.pop()
 
     def visit_Call(self, node):
-        if isinstance(node.func, ast.Name):
-            self.check_function_call(
-                name=node.func.id, line=node.lineno, col=node.col_offset
-            )
-            self.generic_visit(node)
-        elif isinstance(node.func, ast.Attribute) and isinstance(
-            node.func.value, ast.Name
-        ):
-            if node.func.value.id in self.determine_class_scopes():
+        try:
+            if isinstance(node.func, ast.Name):
                 self.check_function_call(
-                    name=node.func.attr,
-                    line=node.lineno,
-                    col=node.col_offset,
-                    class_name=node.func.value.id,
+                    name=node.func.id, line=node.lineno, col=node.col_offset
                 )
-                self.generic_visit(node)
-                return
-            if node.func.value.id not in ('self', 'super'):
-                self.generic_visit(node)
-                return
-            self.check_function_call(
-                name=node.func.attr, line=node.lineno, col=node.col_offset
-            )
-            self.generic_visit(node)
-        else:
+            elif isinstance(node.func, ast.Attribute) and isinstance(
+                node.func.value, ast.Name
+            ):
+                if node.func.value.id in self.determine_class_scopes():
+                    self.check_function_call(
+                        name=node.func.attr,
+                        line=node.lineno,
+                        col=node.col_offset,
+                        class_name=node.func.value.id,
+                    )
+                    return
+                if node.func.value.id not in ('self', 'super'):
+                    return
+                self.check_function_call(
+                    name=node.func.attr, line=node.lineno, col=node.col_offset
+                )
+        finally:
             self.generic_visit(node)
 
     def determine_class_scopes(self):
