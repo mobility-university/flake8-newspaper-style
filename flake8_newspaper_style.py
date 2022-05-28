@@ -1,7 +1,7 @@
 import ast
 import importlib.metadata
 
-NEWS100 = "NEWS100 newspaper style: function {name} defined in line {line} should be moved down"
+NEWS100 = r"NEWS100 newspaper style: function {name} defined in line {line} should be moved down"
 
 
 class Plugin:
@@ -186,6 +186,30 @@ class Plugin:
         ... class A:
         ...     a=special()
         ... ''')
+        >>> lint('''
+        ... def special():
+        ...     ...
+        ... class A:
+        ...     def __init__(self):
+        ...         list(special())
+        ... ''')
+        6:13 NEWS100 newspaper style: function special defined in line 2 should be moved down
+        >>> lint('''
+        ... def special():
+        ...     ...
+        ... class A:
+        ...     def __init__(self):
+        ...         self.list(special())
+        ... ''')
+        6:18 NEWS100 newspaper style: function special defined in line 2 should be moved down
+        >>> lint('''
+        ... def special():
+        ...     ...
+        ... class A:
+        ...     def __init__(self):
+        ...         A.list(special())
+        ... ''')
+        6:15 NEWS100 newspaper style: function special defined in line 2 should be moved down
         """
         visitor = Visitor()
         visitor.visit(self.tree)
@@ -205,30 +229,31 @@ class Visitor(ast.NodeVisitor):
     def visit_FunctionDef(self, node):
         self.scope.append(node)
         self.functions.append((list(self.scope), node))
-        self.ignore_decorators(node)
+
+        def ignore_decorators(node):
+            node.decorator_list = []  # decorators violate newspaper style
+
+        ignore_decorators(node)
         self.generic_visit(node)
         self.scope.pop()
-
-    @staticmethod
-    def ignore_decorators(node):
-        node.decorator_list = []  # decorators violate newspaper style
 
     def visit_ClassDef(self, node):
         self.scope.append(node)
-        self.filter_function_calls_for_class_variables(node)
+
+        def filter_function_calls_for_class_variables(node):
+            # class variables violate newspaper style
+            node.body = [e for e in node.body if not isinstance(e, ast.Assign)]
+
+        filter_function_calls_for_class_variables(node)
         self.generic_visit(node)
         self.scope.pop()
-
-    @staticmethod
-    def filter_function_calls_for_class_variables(node):
-        # class variables violate newspaper style
-        node.body = [e for e in node.body if not isinstance(e, ast.Assign)]
 
     def visit_Call(self, node):
         if isinstance(node.func, ast.Name):
             self.check_function_call(
                 name=node.func.id, line=node.lineno, col=node.col_offset
             )
+            self.generic_visit(node)
         elif isinstance(node.func, ast.Attribute) and isinstance(
             node.func.value, ast.Name
         ):
@@ -239,12 +264,17 @@ class Visitor(ast.NodeVisitor):
                     col=node.col_offset,
                     class_name=node.func.value.id,
                 )
+                self.generic_visit(node)
                 return
             if node.func.value.id not in ('self', 'super'):
+                self.generic_visit(node)
                 return
             self.check_function_call(
                 name=node.func.attr, line=node.lineno, col=node.col_offset
             )
+            self.generic_visit(node)
+        else:
+            self.generic_visit(node)
 
     def determine_class_scopes(self):
         scopes = set()

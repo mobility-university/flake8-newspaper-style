@@ -7,13 +7,13 @@ with open('README.md', 'r', encoding='utf-8') as file:
 setuptools.setup(
     name="flake8-newspaper-style",
     license="MIT",
-    version="0.2.11",
+    version="0.3.0",
     description="Check code for newspaper style",
     long_description=README,
     long_description_content_type='text/markdown',
     author="think",
     author_email="who@knows.me",
-    url='https://github.com/mobility-university/flake8-newspaper-style', 
+    url='https://github.com/mobility-university/flake8-newspaper-style',
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
