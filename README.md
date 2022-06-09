@@ -7,7 +7,7 @@ This also enables to read the code without an editor.
 
 Quoting Robert C. Martin from his Clean Code book.
 
-“Think of a well-written newspaper article. You read it vertically. At the top, you expect a headline that will tell you what the story is about and allows you to decided whether it is something you want to read. The first paragraph gives you a synopsis of the whole story, hiding all the details while giving you the broad-brush concepts. As you continue downward, the details increase until you have all the dates, names, quotes, claims, and other minutiae. We would like a source file to be like a newspaper article.”
+“Think of a well-written newspaper article. You read it vertically. At the top you expect a headline that will tell you what the story is about and allows you to decide whether it is something you want to read. The first paragraph gives you a synopsis of the whole story, hiding all the details while giving you the broad-brush concepts. As you continue downward, the details increase until you have all the dates, names, quotes, claims, and other minutia.”
 
 In Python newspaper code should look like this.
 
