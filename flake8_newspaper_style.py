@@ -186,6 +186,14 @@ class Plugin:
         ... class A:
         ...     a=special()
         ... ''')
+        >>> lint('''
+        ... class Test:
+        ...     counter = 0
+        ... def do_something(self):
+        ...     if self.counter < 1:
+        ...         self.counter += 1
+        ...         self.do_something()
+        ... ''')
         """
         visitor = Visitor()
         visitor.visit(self.tree)
