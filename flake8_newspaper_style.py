@@ -1,7 +1,7 @@
 import ast
 import importlib.metadata
 
-NEWS100 = "NEWS100 newspaper style: function {name} defined in line {line} should be moved down"
+NEW100 = "NEW100 newspaper style: function {name} defined in line {line} should be moved down"
 
 
 class Plugin:
@@ -36,28 +36,28 @@ class Plugin:
         ... def headline():
         ...     text()
         ... ''')
-        4:4 NEWS100 newspaper style: function text defined in line 1 should be moved down
+        4:4 NEW100 newspaper style: function text defined in line 1 should be moved down
         >>> lint('''class A:
         ...     def text():
         ...         ...
         ...     def headline():
         ...         text()
         ... ''')
-        5:8 NEWS100 newspaper style: function text defined in line 2 should be moved down
+        5:8 NEW100 newspaper style: function text defined in line 2 should be moved down
         >>> lint('''class A:
         ...     def text(self):
         ...         ...
         ...     def headline(self):
         ...         self.text()
         ... ''')
-        5:8 NEWS100 newspaper style: function text defined in line 2 should be moved down
+        5:8 NEW100 newspaper style: function text defined in line 2 should be moved down
         >>> lint('''class A:
         ...     def text(self):
         ...         ...
         ...     def headline(self):
         ...         A.text()
         ... ''')
-        5:8 NEWS100 newspaper style: function text defined in line 2 should be moved down
+        5:8 NEW100 newspaper style: function text defined in line 2 should be moved down
         >>> lint('''class A:
         ...     def text(self):
         ...         def subtext():
@@ -80,38 +80,38 @@ class Plugin:
         ...     def headline(self):
         ...         A.text()
         ... ''')
-        6:8 NEWS100 newspaper style: function text defined in line 2 should be moved down
+        6:8 NEW100 newspaper style: function text defined in line 2 should be moved down
         >>> lint('''def text():
         ...     ...
         ... def headline():
         ...     return f'{text()}'
         ... ''')
-        4:14 NEWS100 newspaper style: function text defined in line 1 should be moved down
+        4:14 NEW100 newspaper style: function text defined in line 1 should be moved down
         >>> lint('''async def text():
         ...     ...
         ... async def headline():
         ...     return f'{text()}'
         ... ''')
-        4:14 NEWS100 newspaper style: function text defined in line 1 should be moved down
+        4:14 NEW100 newspaper style: function text defined in line 1 should be moved down
         >>> lint('''async def text():
         ...     ...
         ... async def headline():
         ...     yield from text()
         ... ''')
-        4:15 NEWS100 newspaper style: function text defined in line 1 should be moved down
+        4:15 NEW100 newspaper style: function text defined in line 1 should be moved down
         >>> lint('''def text():
         ...     ...
         ... def headline():
         ...     return lambda: text()
         ... ''')
-        4:19 NEWS100 newspaper style: function text defined in line 1 should be moved down
+        4:19 NEW100 newspaper style: function text defined in line 1 should be moved down
         >>> lint('''def text():
         ...     ...
         ... def headline():
         ...     def sub():
         ...         return f'{text()}'
         ... ''')
-        5:18 NEWS100 newspaper style: function text defined in line 1 should be moved down
+        5:18 NEW100 newspaper style: function text defined in line 1 should be moved down
         >>> lint('''def headline():
         ...     def sub():
         ...         return 'abc'
@@ -124,7 +124,7 @@ class Plugin:
         ...         def sub2(self):
         ...             sub()
         ... ''')
-        6:12 NEWS100 newspaper style: function sub defined in line 3 should be moved down
+        6:12 NEW100 newspaper style: function sub defined in line 3 should be moved down
         >>> lint('''def text():
         ...     ...
         ... def headline():
@@ -165,7 +165,7 @@ class Plugin:
         ... def b():
         ...     A.a()
         ... ''')
-        6:4 NEWS100 newspaper style: function a defined in line 3 should be moved down
+        6:4 NEW100 newspaper style: function a defined in line 3 should be moved down
         >>> lint('''
         ... def decorator():
         ...     ...
@@ -272,7 +272,7 @@ class Visitor(ast.NodeVisitor):
             return None
         node = matching_function
         if node.lineno < line:
-            self.errors.append((line, col, NEWS100.format(name=name, line=node.lineno)))
+            self.errors.append((line, col, NEW100.format(name=name, line=node.lineno)))
         return None
 
     def get_matching_class_function(self, class_name, name):
