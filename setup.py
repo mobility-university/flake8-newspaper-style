@@ -7,13 +7,13 @@ with open('README.md', 'r', encoding='utf-8') as file:
 setuptools.setup(
     name="flake8-newspaper-style",
     license="MIT",
-    version="0.2.11",
+    version="0.4.0",
     description="Check code for newspaper style",
     long_description=README,
     long_description_content_type='text/markdown',
     author="think",
     author_email="who@knows.me",
-    url='https://github.com/mobility-university/flake8-newspaper-style', 
+    url='https://github.com/mobility-university/flake8-newspaper-style',
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
@@ -24,6 +24,6 @@ setuptools.setup(
     py_modules=["flake8_newspaper_style"],
     install_requires=["flake8 > 3.0.0"],
     entry_points={
-        "flake8.extension": ["NEWS100 = flake8_newspaper_style:Plugin"],
+        "flake8.extension": ["NEW100 = flake8_newspaper_style:Plugin"],
     },
 )

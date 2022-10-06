@@ -16,7 +16,7 @@ def create_file(context):
 @when('I flake8 this file')
 def lint(context):
     context.result = run(
-        ['flake8', '--select=NEWS', 'file'], stdout=PIPE, stderr=PIPE, check=False
+        ['flake8', '--select=NEW', 'file'], stdout=PIPE, stderr=PIPE, check=False
     )
 
 

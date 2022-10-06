@@ -15,7 +15,7 @@ Feature: Usage
     When I flake8 this file
     Then it fails with
       """
-      file:5:5: NEWS100 newspaper style: function text defined in line 1 should be moved down
+      file:5:5: NEW100 newspaper style: function text defined in line 1 should be moved down
       """
 
   Scenario: Check
