@@ -213,13 +213,9 @@ class Visitor(ast.NodeVisitor):
     def visit_FunctionDef(self, node):
         self.scope.append(node)
         self.functions.append((list(self.scope), node))
-        self.ignore_decorators(node)
-        self.generic_visit(node)
+        if not node.decorator_list:
+            self.generic_visit(node)
         self.scope.pop()
-
-    @staticmethod
-    def ignore_decorators(node):
-        node.decorator_list = []  # decorators violate newspaper style
 
     def visit_ClassDef(self, node):
         self.scope.append(node)
