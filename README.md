@@ -25,7 +25,7 @@ There hasn't been an automatic way in python to check for this. So here it is.
 
 ```py
 # install the flake8 extension for newspaper style
-pip3 install flake8-newspaper-style==0.4.0
+pip3 install flake8-newspaper-style==0.4.2
 # then check your code
 flake8 --select=NEW src  # here it restricts flake8 to newspaper style issues
 ```

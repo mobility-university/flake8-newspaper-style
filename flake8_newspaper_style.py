@@ -189,10 +189,10 @@ class Plugin:
         >>> lint('''
         ... class Test:
         ...     counter = 0
-        ... def do_something(self):
-        ...     if self.counter < 1:
-        ...         self.counter += 1
-        ...         self.do_something()
+        ...     def do_something(self):
+        ...         if self.counter < 1:
+        ...             self.counter += 1
+        ...             self.do_something()
         ... ''')
         """
         visitor = Visitor()
@@ -219,14 +219,9 @@ class Visitor(ast.NodeVisitor):
 
     def visit_ClassDef(self, node):
         self.scope.append(node)
-        self.filter_function_calls_for_class_variables(node)
-        self.generic_visit(node)
+        if not any(isinstance(a, (ast.Assign, ast.Expr)) for a in node.body):
+            self.generic_visit(node)
         self.scope.pop()
-
-    @staticmethod
-    def filter_function_calls_for_class_variables(node):
-        # class variables violate newspaper style
-        node.body = [e for e in node.body if not isinstance(e, ast.Assign)]
 
     def visit_Call(self, node):
         if isinstance(node.func, ast.Name):
@@ -246,9 +241,14 @@ class Visitor(ast.NodeVisitor):
                 return
             if node.func.value.id not in ('self', 'super'):
                 return
-            self.check_function_call(
-                name=node.func.attr, line=node.lineno, col=node.col_offset
-            )
+
+            def is_in_current_scope():
+                return node.func.attr in [scope.name for scope in self.scope]
+
+            if not is_in_current_scope():
+                self.check_function_call(
+                    name=node.func.attr, line=node.lineno, col=node.col_offset
+                )
 
     def determine_class_scopes(self):
         scopes = set()
