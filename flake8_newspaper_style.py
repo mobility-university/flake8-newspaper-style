@@ -194,6 +194,16 @@ class Plugin:
         ...             self.counter += 1
         ...             self.do_something()
         ... ''')
+        >>> lint('''
+        ... def deco():
+        ...     ...
+        ... def text():
+        ...     ...
+        ... @deco
+        ... def headline():
+        ...     text()
+        ... ''')
+        8:4 NEW100 newspaper style: function text defined in line 4 should be moved down
         """
         visitor = Visitor()
         visitor.visit(self.tree)
@@ -213,7 +223,10 @@ class Visitor(ast.NodeVisitor):
     def visit_FunctionDef(self, node):
         self.scope.append(node)
         self.functions.append((list(self.scope), node))
-        if not node.decorator_list:
+        if node.decorator_list:
+            for element in node.body:
+                self.generic_visit(element)
+        else:
             self.generic_visit(node)
         self.scope.pop()
 
