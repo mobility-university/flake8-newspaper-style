@@ -1,0 +1,46 @@
+name: "PR"
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  Specification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout This Repo
+        uses: actions/checkout@v3
+
+      - name: Execute Specification
+        run: bin/test_specification
+
+  Unittest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout This Repo
+        uses: actions/checkout@v3
+
+      - name: Unit Test
+        run: ./dev ./bin/unittest
+
+  Format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout This Repo
+        uses: actions/checkout@v3
+
+      - name: Format Check
+        run: |
+          set -e
+          check= ./bin/format
+          git diff --exit-code
+
+  Lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout This Repo
+        uses: actions/checkout@v3
+
+      - name: Lint Check
+        run: ./bin/lint
